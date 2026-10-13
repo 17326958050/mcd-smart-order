@@ -1,0 +1,39 @@
+{
+  "_comment": "麦当劳中国 MCP 配置样例（脱敏）。此文件仅用于说明配置结构，禁止填入任何真实凭证。",
+  "_warning": "严禁提交真实 Token / openid / 手机号 / 门店 id。真实配置请通过环境变量或云端密钥注入，不要落地成文件。",
+
+  "mcp": {
+    "endpoint": "https://mcp.mcd.cn",
+    "transport": "streamable-http",
+    "token_env": "MCP_TOKEN",
+    "token": "YOUR_MCP_TOKEN",
+    "timeout_ms": 10000,
+    "retry": {
+      "max": 3,
+      "backoff_ms": 500
+    }
+  },
+
+  "cloud": {
+    "provider": "wechat-miniprogram-cloud",
+    "env_id": "YOUR_CLOUD_ENV_ID",
+    "region": "ap-shanghai"
+  },
+
+  "miniprogram": {
+    "appid": "YOUR_APPID",
+    "repository": "https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME"
+  },
+
+  "feature_flags": {
+    "query_only_mode": true,
+    "enable_order": false,
+    "enable_mock": true
+  },
+
+  "demo_account": {
+    "note": "演示与离线预览用，不对应任何真实账号",
+    "openid": "MOCK_OPENID_NOT_A_REAL_ONE",
+    "nickname": "演示用户"
+  }
+}
