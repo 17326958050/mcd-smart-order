@@ -39,6 +39,11 @@ Page({
     }
   },
 
+  // 查看订单（路由互通骨架）
+  goOrders() {
+    wx.navigateTo({ url: '/pages/order-detail/order-detail' })
+  },
+
   // 下单：先做模式与金额校验
   async onSubmit() {
     if (this.data.queryOnlyMode) {

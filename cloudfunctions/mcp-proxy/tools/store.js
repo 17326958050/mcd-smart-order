@@ -1,17 +1,41 @@
-// MCP 工具封装：门店（对应官方工具 query-nearby-stores / delivery-query-stores）
-// TODO(第 2 步)：接入 MCP 连接模块后实现真实调用；enable_mock 时返回内置演示数据
-// 出参约定：价格类字段一律为「元」字符串（本模块不含价格）
+// MCP 工具封装：门店（官方工具 query-nearby-stores / delivery-query-stores）
+// 单位：本模块无价格字段
+// 行为：有 MCP_TOKEN 走真实接口；无 Token 且 Mock 开启时返回离线演示数据
+const { callTool, isMockMode } = require('../mcp-client')
+const mockData = require('../mock/data')
 
 module.exports = {
   // 查询附近可用门店（入参为模糊坐标或关键词）
+  // 返回：{ mock: Boolean, stores: [{ id, name, address, distanceMeters? }] }
   async queryNearbyStores({ latitude, longitude, keyword } = {}) {
-    // TODO(第 2 步)：调用 query-nearby-stores
-    throw new Error('TODO: 第 2 步实现 query-nearby-stores')
+    if (isMockMode()) {
+      let list = mockData.stores
+      if (keyword) list = list.filter((s) => (s.name + s.address).indexOf(keyword) >= 0)
+      return { mock: true, stores: list }
+    }
+    const args = {}
+    if (latitude != null && longitude != null) args.location = { latitude, longitude }
+    if (keyword) args.keyword = keyword
+    const data = await callTool('query-nearby-stores', args)
+    return { mock: false, stores: normalizeStores(data) }
   },
 
-  // 外送场景查询可配送门店
+  // 外送场景：查询可配送门店
   async queryDeliveryStores({ addressId } = {}) {
-    // TODO(第 2 步)：调用 delivery-query-stores
-    throw new Error('TODO: 第 2 步实现 delivery-query-stores')
+    if (isMockMode()) return { mock: true, stores: mockData.stores }
+    const data = await callTool('delivery-query-stores', { addressId })
+    return { mock: false, stores: normalizeStores(data) }
   }
+}
+
+// 归一化官方返回结构，只保留项目需要的字段（不猜字段含义，缺失则为 undefined）
+function normalizeStores(data) {
+  const raw = (data && (data.stores || data.list || data.data)) || []
+  if (!Array.isArray(raw)) return []
+  return raw.map((s) => ({
+    id: s.storeId || s.id || s.storeCode,
+    name: s.storeName || s.name,
+    address: s.address || s.storeAddress,
+    distanceMeters: s.distance != null ? s.distance : s.distanceMeters
+  }))
 }

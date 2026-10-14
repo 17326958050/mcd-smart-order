@@ -13,5 +13,6 @@
   </view>
 
   <button class="primary-btn" bindtap="onSubmit">下单</button>
+  <button class="link-btn" bindtap="goOrders">查看我的订单</button>
   <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品；价格与供应以麦当劳官方渠道实时结果为准</view>
 </view>

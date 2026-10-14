@@ -16,7 +16,7 @@ Page({
 
   async onQuery() {
     this.setData({ loading: true })
-    const res = await callFunction('mcp-proxy', { action: 'order.query', orderId: this.data.orderId })
+    const res = await callFunction('mcp-proxy', { action: 'order.query', payload: { orderId: this.data.orderId } })
     this.setData({ loading: false })
     if (!res.ok) return toastError(res)
     this.setData({ order: res.data.order || null })

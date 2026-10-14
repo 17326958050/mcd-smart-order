@@ -23,7 +23,7 @@ Page({
   async onSearch() {
     // TODO(第 3 步)：mcp-proxy/store.query-nearby-stores({ keyword })
     this.setData({ loading: true })
-    const res = await callFunction('mcp-proxy', { action: 'store.queryNearby', keyword: this.data.keyword })
+    const res = await callFunction('mcp-proxy', { action: 'store.queryNearby', payload: { keyword: this.data.keyword } })
     this.setData({ loading: false })
     if (!res.ok) return toastError(res)
     this.setData({ stores: (res.data && res.data.stores) || [], empty: !(res.data && res.data.stores || []).length })
