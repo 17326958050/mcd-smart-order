@@ -12,20 +12,21 @@ module.exports = {
     return { mock: false, coupons: normalizeCoupons(data) }
   },
 
-  // 当前可用券（结合购物车餐品）
+  // 当前可领取的麦麦省券列表
+  // TODO(联调)：官方文档只说明「查询用户当前可领取的券」，未公开入参结构。
+  // 暂不传参（最保守做法：宁可少传，也不凭猜测编造字段名）；
+  // 配好 MCP_TOKEN 后用 action='mcp.tools' 拉取 inputSchema 校正。
   async availableCoupons({ storeId, items } = {}) {
     if (isMockMode()) return { mock: true, coupons: mockData.coupons.map((c) => ({ ...c })) }
-    const data = await callTool('available-coupons', {
-      storeId,
-      meals: (items || []).map((i) => ({ mealId: i.id, quantity: i.quantity || 1 }))
-    })
+    const data = await callTool('available-coupons', {})
     return { mock: false, coupons: normalizeCoupons(data) }
   },
 
-  // 自动绑定可用券（会产生真实券绑定，属于交易类操作，前端需二次确认）
-  async autoBindCoupons({ storeId, couponIds } = {}) {
-    if (isMockMode()) return { mock: true, bound: (couponIds || []).slice() }
-    const data = await callTool('auto-bind-coupons', { storeId, couponIds })
+  // 一键领取麦麦省所有可领券（官方文档明确「无需指定具体的优惠券和 couponId」）
+  // 属于「会改变账户状态」的操作：真实模式下必须由用户显式点击触发，前端需二次确认
+  async autoBindCoupons() {
+    if (isMockMode()) return { mock: true, bound: [], note: '演示模式：未调用官方领券接口' }
+    const data = await callTool('auto-bind-coupons', {})
     return { mock: false, bound: (data && (data.boundCouponIds || data.couponIds)) || [] }
   },
 

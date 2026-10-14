@@ -1,8 +1,19 @@
 .page { padding: 24rpx; }
 .card { background: #fff; border-radius: 12rpx; padding: 24rpx; margin-bottom: 20rpx; }
 .row { display: flex; justify-content: space-between; align-items: center; padding: 12rpx 0; font-size: 28rpx; }
-.row.saved { color: #DA291C; font-weight: 700; }
+.row.saved { color: #DA291C; font-weight: 700; font-size: 32rpx; }
+.row.sub { color: #999; font-size: 24rpx; padding-top: 0; }
+.divider { height: 2rpx; background: #f2f2f2; margin: 12rpx 0; }
+.item-row { display: flex; align-items: center; font-size: 26rpx; padding: 10rpx 0; }
+.item-name { flex: 1; }
+.item-qty { color: #999; margin-right: 16rpx; }
+.item-price { color: #333; }
+.coupon-line { font-size: 22rpx; color: #07a052; margin-top: 8rpx; }
 .tip { font-size: 22rpx; color: #999; margin-top: 8rpx; }
+.mock-tip { color: #b26a00; }
+.err-tip { color: #DA291C; }
+.center-tip { text-align: center; font-size: 22rpx; color: #bbb; margin-top: 16rpx; }
 .primary-btn { background: #DA291C; color: #fff; border-radius: 12rpx; margin-top: 24rpx; }
+.primary-btn[disabled] { background: #eee; color: #aaa; }
 .link-btn { background: transparent; color: #666; font-size: 26rpx; margin-top: 12rpx; text-decoration: underline; }
 .disclaimer-footer { text-align: center; color: #ccc; font-size: 20rpx; margin-top: 24rpx; }

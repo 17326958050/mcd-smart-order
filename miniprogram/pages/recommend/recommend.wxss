@@ -1,5 +1,44 @@
 .page { padding: 24rpx; }
-.cond-box { background: #fff; border-radius: 12rpx; padding: 20rpx; font-size: 24rpx; color: #666; margin-bottom: 20rpx; }
-.empty { text-align: center; color: #999; font-size: 26rpx; padding: 80rpx 0; }
-.primary-btn { background: #DA291C; color: #fff; border-radius: 12rpx; margin-top: 24rpx; }
+.cond-box { background: #fff; border-radius: 12rpx; padding: 20rpx; font-size: 24rpx; color: #666; }
+.cond-line { line-height: 1.6; }
+.store-line { font-size: 24rpx; color: #999; margin: 12rpx 0; }
+.mock-badge { background: #fff7e6; color: #b26a00; font-size: 22rpx; padding: 12rpx 16rpx; border-radius: 8rpx; margin-bottom: 16rpx; }
+.loading { text-align: center; color: #999; font-size: 24rpx; padding: 40rpx 0; }
+
+/* 金句卡 */
+.insight { background: #fff5f4; border: 2rpx solid #f5c6c1; border-radius: 12rpx; padding: 20rpx; margin: 20rpx 0; }
+.insight-title { font-size: 26rpx; font-weight: 700; color: #DA291C; margin-bottom: 10rpx; }
+.insight-text { font-size: 24rpx; color: #7a2e28; line-height: 1.6; }
+
+/* 组合卡 */
+.combo { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 20rpx; }
+.combo:active { background: #fafafa; }
+.combo-head { display: flex; align-items: center; margin-bottom: 16rpx; }
+.combo-rank { font-size: 26rpx; font-weight: 700; color: #333; margin-right: 12rpx; }
+.badge { font-size: 20rpx; padding: 4rpx 12rpx; border-radius: 20rpx; margin-right: 8rpx; }
+.badge-pay { background: #DA291C; color: #fff; }
+.badge-list { background: #eef3ff; color: #2b5cd9; }
+.badge-coupon { background: #e8f8ef; color: #07a052; }
+
+.combo-items { border-top: 2rpx solid #f2f2f2; padding-top: 12rpx; }
+.combo-item { display: flex; align-items: center; font-size: 24rpx; color: #555; padding: 8rpx 0; }
+.ci-name { flex: 1; }
+.ci-qty { color: #999; margin-right: 16rpx; }
+.ci-price { color: #333; }
+
+.combo-foot { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 16rpx; border-top: 2rpx solid #f2f2f2; padding-top: 16rpx; }
+.price-block { display: flex; flex-direction: column; }
+.price-list { font-size: 22rpx; color: #bbb; text-decoration: line-through; }
+.price-final { font-size: 36rpx; color: #DA291C; font-weight: 700; }
+.combo-meta { display: flex; flex-direction: column; align-items: flex-end; }
+.saved { font-size: 24rpx; color: #07a052; font-weight: 600; }
+.kcal { font-size: 22rpx; color: #999; margin-top: 6rpx; }
+.combo-coupon { font-size: 22rpx; color: #07a052; margin-top: 10rpx; }
+.verified-tag { font-size: 20rpx; color: #07c160; margin-top: 8rpx; }
+
+.empty { text-align: center; color: #999; font-size: 26rpx; padding: 60rpx 0; }
+.ghost-btn { background: #fff; color: #DA291C; border: 2rpx solid #DA291C; border-radius: 12rpx; font-size: 26rpx; margin-top: 12rpx; }
+
+.preview { margin-top: 40rpx; }
+.preview-title { font-size: 24rpx; color: #999; margin-bottom: 16rpx; }
 .disclaimer-footer { text-align: center; color: #ccc; font-size: 20rpx; margin-top: 24rpx; }

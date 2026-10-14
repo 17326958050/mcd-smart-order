@@ -1,2 +1,2 @@
-<!-- 价格标签：¥ + 格式化金额；未实算灰显 -->
-<text class="price-tag {{verified ? 'verified' : 'unverified'}}">¥{{display}}</text>
+<!-- 价格标签：¥ + 格式化金额；未实算灰显；无金额时只显示占位符（不显示 ¥0.00，避免被读成「不花钱」） -->
+<text class="price-tag {{verified ? 'verified' : 'unverified'}}">{{display === '--' ? '--' : '¥' + display}}</text>

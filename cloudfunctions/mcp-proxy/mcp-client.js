@@ -172,11 +172,28 @@ function unwrapToolResult(result) {
   }
 }
 
+// 拉取官方工具清单（含 inputSchema）
+// 用途：官方 README 只列了工具名，没有公开入参结构。配好 MCP_TOKEN 后，
+// 用 mcp-proxy 的 action='mcp.tools' 即可拿到**官方权威的 inputSchema**，
+// 据此校正各 tools 模块的入参字段，避免凭猜测写参数。绝不回传任何凭证。
+async function listTools() {
+  if (!readToken()) throw mcpError('NO_TOKEN', '未配置 MCP_TOKEN，无法获取官方工具清单')
+  await ensureSession()
+  const result = await post({ jsonrpc: '2.0', id: rpcSeq++, method: 'tools/list', params: {} })
+  const tools = (result && result.tools) || []
+  return tools.map((t) => ({
+    name: t.name,
+    description: t.description,
+    inputSchema: t.inputSchema || null
+  }))
+}
+
 module.exports = {
   ENDPOINT: 'https://' + ENDPOINT_HOST,
   readToken,
   isMockMode,
   callTool,
+  listTools,
   mcpError,
   // 仅供测试
   _parseResponse: parseResponse

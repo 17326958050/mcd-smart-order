@@ -1,13 +1,59 @@
-<!-- 推荐页：条件回显 + 餐品卡片列表 + 去结算 -->
+<!-- 推荐页：条件回显 + 金句 + 组合列表（实算）+ 未实算餐品（灰显） -->
 <view class="page">
   <view class="cond-box" wx:if="{{conditions}}">
-    <text>预算 ≤ ¥{{conditions.budgetYuan}} · 热量 ≤ {{conditions.maxCalorie}} 千卡 · 人数 {{conditions.people}} · 忌口：{{conditions.avoidText}}</text>
+    <view class="cond-line">预算 {{conditions.budgetYuan ? '≤ ¥' + conditions.budgetYuan : '不限'}} · 热量 {{conditions.maxCalorie ? '≤ ' + conditions.maxCalorie + ' 千卡' : '不限'}} · {{conditions.people}} 人 · 忌口：{{conditions.avoidText || '无'}}</view>
+  </view>
+  <view class="store-line" wx:if="{{store}}">门店：{{store.name}}</view>
+  <view class="mock-badge" wx:if="{{mock}}">演示数据（未配置 MCP Token 时为离线 Mock，结构与真实接口一致）</view>
+
+  <view class="loading" wx:if="{{loading}}">正在实算价格…（每个组合都会走一次算价）</view>
+
+  <!-- 金句：标价最低 ≠ 实付最低（只在真的算出来时才展示，不编造） -->
+  <view class="insight" wx:if="{{insight}}">
+    <view class="insight-title">🔍 算出来一个反直觉结论</view>
+    <view class="insight-text">{{insight.text}}</view>
   </view>
 
-  <meal-card wx:for="{{meals}}" wx:key="id" meal="{{item}}" bind:select="onSelectMeal" />
+  <!-- 组合列表：按「实付」升序 -->
+  <view class="combo" wx:for="{{combos}}" wx:key="id" data-combo="{{item}}" bindtap="onSelectCombo">
+    <view class="combo-head">
+      <text class="combo-rank">方案 {{item.rank}}</text>
+      <text class="badge badge-pay" wx:if="{{item.isCheapest}}">实付最低</text>
+      <text class="badge badge-list" wx:if="{{item.isLowestList}}">标价最低</text>
+      <text class="badge badge-coupon" wx:if="{{item.savedYuan != '0.00'}}">已叠券</text>
+    </view>
 
-  <view wx:if="{{!meals.length}}" class="empty">骨架阶段：推荐逻辑将在第 3 步接入</view>
+    <view class="combo-items">
+      <view class="combo-item" wx:for="{{item.items}}" wx:for-item="it" wx:key="id">
+        <text class="ci-name">{{it.name}}</text>
+        <text class="ci-qty">×{{it.quantity}}</text>
+        <text class="ci-price">¥{{it.priceYuan}}</text>
+      </view>
+    </view>
 
-  <button class="primary-btn" bindtap="goCheckout">去结算</button>
-  <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品；未实算结果仅为标价参考</view>
+    <view class="combo-foot">
+      <view class="price-block">
+        <text class="price-list">标价 ¥{{item.listPriceYuan}}</text>
+        <text class="price-final">实付 ¥{{item.finalPriceYuan}}</text>
+      </view>
+      <view class="combo-meta">
+        <text wx:if="{{item.savedYuan != '0.00'}}" class="saved">省 ¥{{item.savedYuan}}</text>
+        <text class="kcal" wx:if="{{item.totalCalorie != null}}">{{item.totalCalorie}} 千卡</text>
+      </view>
+    </view>
+    <view class="combo-coupon" wx:if="{{item.couponNames.length}}">用了：{{item.couponNames[0]}}</view>
+    <view class="verified-tag">已实算验证（calculate-price）</view>
+  </view>
+
+  <view wx:if="{{errorMsg && !loading}}" class="empty">{{errorMsg}}</view>
+
+  <button class="ghost-btn" wx:if="{{!store}}" bindtap="goStore">去选择门店</button>
+
+  <!-- 未实算餐品：一律灰显 -->
+  <view class="preview" wx:if="{{meals.length}}">
+    <view class="preview-title">全部餐品（仅标价参考，未实算）</view>
+    <meal-card wx:for="{{meals}}" wx:key="id" meal="{{item}}" />
+  </view>
+
+  <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品；未实算结果仅为标价参考，价格与供应以官方渠道实时结果为准</view>
 </view>

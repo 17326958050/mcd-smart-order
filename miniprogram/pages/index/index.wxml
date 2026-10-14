@@ -1,18 +1,41 @@
-<!-- 首页：一句话需求 → 解析 → 选门店 → 推荐（骨架 + 自检入口） -->
+<!-- 首页：一句话需求 → 解析 → 选门店 → 推荐 -->
 <view class="page">
   <view class="hero">
     <view class="hero-title">一句话，帮你算明白怎么点最省</view>
     <view class="hero-sub">说清预算、热量、忌口、人数，我来推荐并实算价格</view>
   </view>
 
+  <!-- 示例话术：一键填入，降低陌生人的上手成本 -->
+  <view class="examples">
+    <view class="examples-title">试试这样说：</view>
+    <view wx:for="{{examples}}" wx:key="*this" class="example-item" data-text="{{item}}" bindtap="onSendNeed">
+      {{item}}
+    </view>
+  </view>
+
+  <!-- 解析结果 -->
   <view class="cond-box" wx:if="{{parsed}}">
-    <text>已解析：预算 ≤ ¥{{parsed.budgetYuan}} · 热量 ≤ {{parsed.maxCalorie}} 千卡 · 人数 {{parsed.people}} · 忌口：{{parsed.avoidText}}</text>
+    <view class="cond-title">已听懂你的需求</view>
+    <view class="cond-row">预算上限：{{parsed.budgetYuan ? '¥' + parsed.budgetYuan : '未限制'}}</view>
+    <view class="cond-row">热量上限：{{parsed.maxCalorie ? parsed.maxCalorie + ' 千卡' : '未限制'}}</view>
+    <view class="cond-row">人数：{{parsed.people}} 人</view>
+    <view class="cond-row">忌口：{{parsed.avoidText || '无'}}</view>
+    <view class="cond-note" wx:if="{{!parsed.budgetYuan && !parsed.maxCalorie && !parsed.avoidText}}">
+      没提取到限制条件，也可以先选门店看推荐
+    </view>
+  </view>
+
+  <view class="store-echo" wx:if="{{store}}">
+    <text class="store-echo-label">已选门店</text>
+    <text class="store-echo-name">{{store.name}}</text>
   </view>
 
   <view class="actions">
-    <button class="ghost-btn" bindtap="goStore">选择门店</button>
-    <button class="ghost-btn" bindtap="goRecommend">查看推荐</button>
+    <button class="primary-btn" bindtap="goStore">{{store ? '换一家门店' : '选择门店'}}</button>
+    <button class="ghost-btn" bindtap="goRecommend" wx:if="{{store}}">查看推荐组合</button>
   </view>
+
+  <chat-bar bind:send="onSendNeed" loading="{{loading}}" />
 
   <view class="selfcheck">
     <button class="link-btn" bindtap="onPing" loading="{{checking}}">连通性自检（ping）</button>
@@ -24,8 +47,6 @@
     </block>
     <view wx:if="{{result && result.error}}" class="err">{{result.error}}</view>
   </view>
-
-  <chat-bar bind:send="onSendNeed" />
 
   <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品；输出仅供参考，价格与供应以官方渠道实时结果为准</view>
 </view>

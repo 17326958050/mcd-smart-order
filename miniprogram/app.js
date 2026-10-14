@@ -13,7 +13,12 @@ App({
   },
   globalData: {
     // 仅查询模式开关：默认开启，开启时禁止真实下单（对齐 mcp-config.example.json）
+    // 注意：后端 mcp-proxy 也会以环境变量为准再拦一次，不信任前端开关
     queryOnlyMode: true,
-    enableMock: true
+    enableMock: true,
+    // 本次会话的临时数据（只放内存，不做持久化）
+    conditions: null,   // chat-parse 产出的结构化条件
+    store: null,        // 用户手动选定的门店
+    cart: null          // 用户选定的推荐组合（含实算金额）
   }
 })

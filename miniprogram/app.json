@@ -17,5 +17,8 @@
     "scope.userFuzzyLocation": {
       "desc": "仅用于推荐附近门店，默认模糊位置，精确门店由你手动选择"
     }
-  }
+  },
+  "requiredPrivateInfos": [
+    "getFuzzyLocation"
+  ]
 }

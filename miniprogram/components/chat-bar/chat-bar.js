@@ -3,7 +3,8 @@
 Component({
   properties: {
     placeholder: { type: String, value: '例如：2 个人，预算 80 元以内，不要辣，热量别超 1200 千卡' },
-    maxLength: { type: Number, value: 200 } // 与 chat-parse 清洗上限一致
+    maxLength: { type: Number, value: 200 }, // 与 chat-parse 清洗上限一致
+    loading: { type: Boolean, value: false } // 云端解析中时禁用发送，避免重复提交
   },
   data: { value: '' },
   methods: {
@@ -11,6 +12,7 @@ Component({
       this.setData({ value: e.detail.value })
     },
     onSend() {
+      if (this.data.loading) return
       const text = (this.data.value || '').trim()
       if (!text) {
         wx.showToast({ title: '先说说你的需求吧', icon: 'none' })

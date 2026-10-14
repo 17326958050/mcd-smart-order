@@ -1,18 +1,38 @@
-<!-- 账单页：标价/券后/省钱 + 仅查询模式开关 + 下单 -->
+<!-- 账单页：餐品明细 + 标价/实付/省钱 + 仅查询模式 + 下单 -->
 <view class="page">
   <view class="card">
     <view class="row"><text>门店</text><text>{{store.name || '未选择'}}</text></view>
+    <view class="divider"></view>
+    <view class="item-row" wx:for="{{items}}" wx:key="id">
+      <text class="item-name">{{item.name}}</text>
+      <text class="item-qty">×{{item.quantity || 1}}</text>
+      <text class="item-price">¥{{item.priceYuan}}</text>
+    </view>
+    <view wx:if="{{!items.length}}" class="tip">还没有选餐品，请回到推荐页选择方案</view>
+  </view>
+
+  <view class="card">
     <view class="row"><text>标价合计</text><price-tag value="{{listPriceYuan}}" verified="{{false}}" /></view>
+    <view class="row"><text>不用券实付</text><price-tag value="{{noCouponPriceYuan}}" verified="{{true}}" /></view>
     <view class="row"><text>券后实付</text><price-tag value="{{finalPriceYuan}}" verified="{{true}}" /></view>
+    <view class="divider"></view>
     <view class="row saved"><text>本单省</text><text>¥{{savedYuan}}</text></view>
+    <view class="row sub"><text>其中券省</text><text>¥{{couponSavedYuan}}</text></view>
+    <view class="coupon-line" wx:if="{{appliedCouponNames.length}}">已用券：{{appliedCouponNames[0]}}</view>
+    <view class="tip">以上金额均来自 calculate-price 实算（全站统一「元」）</view>
+    <view class="tip mock-tip" wx:if="{{mock}}">当前为离线演示数据（Mock），不会产生真实订单</view>
+    <view class="tip err-tip" wx:if="{{submitNote}}">{{submitNote}}</view>
   </view>
 
   <view class="card">
     <view class="row"><text>仅查询模式</text><switch checked="{{queryOnlyMode}}" bindchange="onToggleQueryOnly" /></view>
-    <view class="tip">开启时只查询、不产生任何真实订单；关闭后可能真实下单</view>
+    <view class="tip">开启时只查询、不产生任何真实订单；关闭后点击下单会真实下单（后端也会再校验一次）</view>
   </view>
 
-  <button class="primary-btn" bindtap="onSubmit">下单</button>
+  <button class="primary-btn" bindtap="onSubmit" loading="{{submitting}}" disabled="{{verifying}}">
+    {{queryOnlyMode ? '仅查询模式：只算不下单' : '确认下单'}}
+  </button>
   <button class="link-btn" bindtap="goOrders">查看我的订单</button>
+  <view class="tip center-tip">金额 > ¥150 时需要你复述确认门店与金额</view>
   <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品；价格与供应以麦当劳官方渠道实时结果为准</view>
 </view>

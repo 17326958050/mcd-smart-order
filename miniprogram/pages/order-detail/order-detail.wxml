@@ -1,10 +1,44 @@
-<!-- 订单详情：骨架，第 3 步接入查询 -->
+<!-- 订单详情：官方状态 + 本地记录双源展示 -->
 <view class="page">
   <view class="card">
-    <view class="row"><text>订单号</text><text>{{orderId || '--'}}</text></view>
-    <view class="row"><text>状态</text><text>{{order.status || '待查询'}}</text></view>
-    <view class="row"><text>金额</text><price-tag value="{{order.amountYuan}}" verified="{{true}}" /></view>
+    <view class="row"><text>订单号</text><text class="oid">{{orderId || '--'}}</text></view>
+    <view class="row"><text>官方状态</text><text>{{order.statusText || '未查询到'}}</text></view>
+    <view class="row">
+      <text>官方金额</text>
+      <price-tag wx:if="{{order.hasAmount}}" value="{{order.amountYuan}}" verified="{{true}}" />
+      <text wx:if="{{!order.hasAmount}}" class="placeholder">--</text>
+    </view>
+    <view class="tip" wx:if="{{order && !order.hasAmount}}">官方未返回金额（演示模式不编造金额，实付以本地实算结果为准）</view>
   </view>
-  <button class="primary-btn" bindtap="onQuery" loading="{{loading}}">查询订单</button>
+
+  <view class="card" wx:if="{{local}}">
+    <view class="card-title">本地记录</view>
+    <view class="row"><text>门店</text><text>{{local.storeName || '--'}}</text></view>
+    <view class="row"><text>标价合计</text><price-tag value="{{local.listPriceYuan}}" verified="{{false}}" /></view>
+    <view class="row"><text>券后实付</text><price-tag value="{{local.finalPriceYuan}}" verified="{{true}}" /></view>
+    <view class="row saved"><text>本单省</text><text>¥{{local.savedYuan}}</text></view>
+    <view class="row"><text>来源</text><text>{{local.source === 'mock' ? '演示数据（未真实下单）' : '真实下单'}}</text></view>
+    <view class="item-row" wx:for="{{local.items}}" wx:key="id">
+      <text class="item-name">{{item.name}}</text>
+      <text class="item-qty">×{{item.quantity}}</text>
+    </view>
+  </view>
+
+  <view class="tip" wx:if="{{note}}">{{note}}</view>
+
+  <view class="search-row">
+    <input class="search-input" placeholder="输入订单号查询" value="{{orderId}}" bindinput="onInputId" />
+    <button class="search-btn" bindtap="onQuery" loading="{{loading}}">查询</button>
+  </view>
+
+  <view class="card" wx:if="{{!orderId}}">
+    <view class="card-title">我的订单（仅本人可见）</view>
+    <view wx:for="{{orders}}" wx:key="orderId" class="order-item" data-id="{{item.orderId}}" bindtap="onSelectOrder">
+      <view class="oi-id">{{item.orderId}}</view>
+      <view class="oi-meta">实付 ¥{{item.finalPriceYuan}} · 省 ¥{{item.savedYuan}} · {{item.statusText}}</view>
+    </view>
+    <view wx:if="{{!orders.length}}" class="tip">还没有订单记录</view>
+  </view>
+
   <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品</view>
 </view>

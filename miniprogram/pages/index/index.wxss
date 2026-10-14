@@ -1,11 +1,33 @@
 .page { padding: 24rpx; }
-.hero { padding: 40rpx 8rpx; }
+.hero { padding: 24rpx 8rpx 8rpx; }
 .hero-title { font-size: 40rpx; font-weight: 700; }
 .hero-sub { font-size: 26rpx; color: #999; margin-top: 12rpx; }
-.cond-box { background: #fff; border-radius: 12rpx; padding: 20rpx; font-size: 24rpx; color: #666; }
+
+/* 示例话术 */
+.examples { margin-top: 20rpx; }
+.examples-title { font-size: 24rpx; color: #999; margin-bottom: 12rpx; }
+.example-item {
+  background: #fff; border-radius: 12rpx; padding: 18rpx 20rpx;
+  font-size: 24rpx; color: #666; margin-bottom: 12rpx;
+  border-left: 6rpx solid #DA291C;
+}
+
+/* 解析结果 */
+.cond-box { background: #fff; border-radius: 12rpx; padding: 20rpx; font-size: 24rpx; color: #666; margin-top: 20rpx; }
+.cond-title { font-size: 26rpx; font-weight: 600; color: #333; margin-bottom: 12rpx; }
+.cond-row { padding: 6rpx 0; }
+.cond-note { font-size: 22rpx; color: #bbb; margin-top: 8rpx; }
+
+/* 门店回显 */
+.store-echo { background: #fff; border-radius: 12rpx; padding: 20rpx; margin-top: 20rpx; display: flex; justify-content: space-between; align-items: center; }
+.store-echo-label { font-size: 24rpx; color: #999; }
+.store-echo-name { font-size: 26rpx; color: #333; font-weight: 600; }
+
 .actions { display: flex; margin-top: 24rpx; }
+.primary-btn { flex: 1; background: #DA291C; color: #fff; border-radius: 12rpx; font-size: 28rpx; margin-right: 16rpx; }
 .ghost-btn { flex: 1; background: #fff; color: #DA291C; border: 2rpx solid #DA291C; border-radius: 12rpx; font-size: 26rpx; margin-right: 16rpx; }
-.ghost-btn:last-child { margin-right: 0; }
+.ghost-btn:last-child, .primary-btn:last-child { margin-right: 0; }
+
 .selfcheck { margin-top: 40rpx; }
 .link-btn { background: transparent; color: #999; font-size: 24rpx; text-decoration: underline; }
 .check { font-size: 24rpx; padding: 8rpx 0; }

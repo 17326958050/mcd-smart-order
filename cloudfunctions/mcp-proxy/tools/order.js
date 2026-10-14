@@ -17,11 +17,16 @@ module.exports = {
         mock: true,
         orderId: 'MOCK-ORDER-' + Date.now(),
         status: 'MOCK_CREATED',
-        amountYuan: undefined,
+        statusText: '演示订单（未真实下单）',
+        amountYuan: null, // 不编造金额，由前端用本地实算结果显示
         note: '演示模式：未向官方发起真实订单，也不会产生任何支付',
         payParams: null // 演示模式不提供支付参数，避免误导
       }
     }
+    // TODO(联调)：官方 create-order 需要「门店信息、就餐方式、商品列表」，
+    // 但入参字段名未公开。此处只传最小必要集合，不猜测额外字段
+    // （尤其不猜支付相关字段，避免误触发真实扣款路径）。
+    // 配好 MCP_TOKEN 后用 action='mcp.tools' 拉取 inputSchema 校正。
     const data = await callTool('create-order', {
       storeId,
       meals: items.map((i) => ({ mealId: i.id, quantity: i.quantity || 1 }))
@@ -38,7 +43,18 @@ module.exports = {
   // 查询订单状态
   async queryOrder({ orderId } = {}) {
     if (isMockMode()) {
-      return { mock: true, order: { orderId, status: 'MOCK_PAID', amountYuan: undefined } }
+      // ★ 演示模式下绝不用 PAID / SUCCESS 之类字样：那会被读成「已支付成功」，
+      //   触碰「禁止模拟支付成功」的红线。统一用中性状态 + 明确说明。
+      return {
+        mock: true,
+        order: {
+          orderId,
+          status: 'MOCK_CREATED',
+          statusText: '演示订单（未真实下单）',
+          amountYuan: null, // 演示模式不编造金额
+          note: '演示数据：未向麦当劳官方渠道发起任何请求'
+        }
+      }
     }
     const data = await callTool('query-order', { orderId })
     const o = (data && (data.order || data)) || {}
@@ -47,7 +63,8 @@ module.exports = {
       order: {
         orderId: o.orderId || orderId,
         status: o.status,
-        amountYuan: o.amount != null ? String(o.amount) : (o.payableAmount != null ? String(o.payableAmount) : undefined)
+        statusText: o.statusText || o.status, // 官方若给出可读文案则原样使用，否则不编造
+        amountYuan: o.amount != null ? String(o.amount) : (o.payableAmount != null ? String(o.payableAmount) : null)
       }
     }
   },

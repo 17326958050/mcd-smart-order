@@ -1,31 +1,71 @@
-// 推荐页：按结构化条件（预算/热量/忌口/人数）筛选餐品组合，价格经实算后展示
-// 核心卖点：标价最低的组合叠加券后未必最便宜 → 每项必须带 verified 标记
+// 推荐页：按结构化条件筛选 → 组合逐个实算 → 按「实付」排序
+// 核心卖点：标价最低的组合叠加券后未必最便宜 → 排序依据是实付，不是标价
+// 数据来源：mcp-proxy / action=menu.recommend（云函数内完成 菜单+营养+券 的编排与实算）
+const { callFunction, toastError } = require('../../utils/request.js')
+
+const app = getApp()
+
 Page({
   data: {
-    conditions: null,   // 来自 chat-parse 的结构化条件
-    meals: [],          // 推荐结果：{ id, name, priceYuan(元字符串), calorie, verified }
-    store: null
+    conditions: null,
+    store: null,
+    loading: false,
+    combos: [],
+    insight: null,
+    meals: [],      // 未实算的餐品（前端灰显，仅标价参考）
+    pool: null,
+    coupons: [],
+    mock: false,
+    errorMsg: ''
   },
 
   onLoad() {
-    this.setData({
-      conditions: wx.getStorageSync('parsedConditions') || null,
-      store: wx.getStorageSync('selectedStore') || null
-    })
-    this.loadRecommend() // TODO(第 3 步)：接入 menus/nutrition/price 实算
+    const store = app.globalData.store || wx.getStorageSync('selectedStore') || null
+    const conditions = app.globalData.conditions || wx.getStorageSync('parsedConditions') || null
+    this.setData({ store, conditions })
+    this.loadRecommend()
   },
 
   async loadRecommend() {
-    // TODO(第 3 步)：query-meals + list-nutrition-foods 筛选 → calculate-price 实算（verified）
-    this.setData({ meals: [] })
+    if (!this.data.store) {
+      this.setData({ errorMsg: '还没有选择门店，请先回到上一步选择门店' })
+      return
+    }
+    this.setData({ loading: true, errorMsg: '' })
+    const res = await callFunction('mcp-proxy', {
+      action: 'menu.recommend',
+      payload: { storeId: this.data.store.id, conditions: this.data.conditions || {} }
+    })
+    this.setData({ loading: false })
+    if (!res.ok) {
+      this.setData({ errorMsg: res.message || '推荐失败' })
+      return toastError(res)
+    }
+    const d = res.data || {}
+    this.setData({
+      combos: d.combos || [],
+      insight: d.insight || null,
+      meals: d.meals || [],
+      pool: d.pool || null,
+      coupons: d.coupons || [],
+      mock: !!d.mock,
+      errorMsg: (d.combos || []).length ? '' : '当前条件下没有可推荐的组合，试着放宽预算或放宽忌口'
+    })
   },
 
-  onSelectMeal(e) {
-    // TODO(第 3 步)：加入当前组合
-    wx.showToast({ title: '骨架阶段，第 3 步接入', icon: 'none' })
-  },
-
-  goCheckout() {
+  // 选定组合 → 进入账单页
+  onSelectCombo(e) {
+    const combo = e.currentTarget.dataset.combo
+    app.globalData.cart = combo
+    wx.setStorageSync('cart', combo)
     wx.navigateTo({ url: '/pages/checkout/checkout' })
+  },
+
+  goStore() {
+    wx.navigateTo({ url: '/pages/store/store' })
+  },
+
+  onShareAppMessage() {
+    return { title: '麦麦智能点单助手：标价最低 ≠ 最便宜，我帮你实算（非官方产品）', path: '/pages/index/index' }
   }
 })
