@@ -1,0 +1,17 @@
+<!-- 第 0 步连通性验证页（后续步骤替换为对话点单首页） -->
+<view class="container">
+  <view class="disclaimer">本项目为参赛作品，非麦当劳官方产品</view>
+
+  <button class="ping-btn" bindtap="onPing" loading="{{checking}}" disabled="{{checking}}">
+    {{checking ? '验证中…' : '开始连通性验证（ping）'}}
+  </button>
+
+  <block wx:if="{{checks}}">
+    <view class="check-item {{checks.ok ? 'pass' : 'fail'}}">① ping 返回 ok:true —— {{checks.ok ? '通过' : '未通过'}}</view>
+    <view class="check-item {{checks.env ? 'pass' : 'fail'}}">② env = {{result.env}} —— {{checks.env ? '通过' : '未通过（环境变量未生效需重新部署）'}}</view>
+    <view class="check-item {{checks.openid ? 'pass' : 'fail'}}">③ openid 非空 —— {{checks.openid ? '通过' : '未通过'}}</view>
+    <view class="check-item {{checks.appid ? 'pass' : 'fail'}}">④ appid = {{result.appid}} —— {{checks.appid ? '通过' : '未通过'}}</view>
+  </block>
+
+  <view wx:if="{{result && result.error}}" class="error">错误：{{result.error}}</view>
+</view>

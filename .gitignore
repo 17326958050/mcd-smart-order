@@ -1,0 +1,20 @@
+# ===== 凭证与本地配置（红线：严禁入库）=====
+.env
+.env.*
+config/local.*
+*token*
+*secret*
+*Token*
+*Secret*
+
+# ===== 依赖 =====
+node_modules/
+
+# ===== 本机私有配置 =====
+project.private.config.json
+
+# ===== WorkBuddy 工作区数据（非项目内容）=====
+.workbuddy/
+
+# ===== 系统文件 =====
+.DS_Store

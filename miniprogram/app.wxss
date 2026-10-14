@@ -1,0 +1,6 @@
+/* 全局样式占位，后续步骤补充设计规范 */
+page {
+  background: #f7f7f7;
+  font-size: 28rpx;
+  color: #333;
+}

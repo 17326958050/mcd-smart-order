@@ -1,0 +1,17 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "麦麦智能点单助手",
+    "navigationBarBackgroundColor": "#DA291C",
+    "navigationBarTextStyle": "white"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "permission": {
+    "scope.userFuzzyLocation": {
+      "desc": "仅用于推荐附近门店，默认模糊位置，精确门店由你手动选择"
+    }
+  }
+}
