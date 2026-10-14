@@ -77,6 +77,27 @@ exports.main = async (event = {}, context) => {
         return ok(await orderTools.cancelOrder(payload))
       case 'order.list':
         return ok(await orderTools.orderList(payload))
+      // 凭证自检（配好 MCP_TOKEN 后的验证入口，只读）
+      // 只回报「是否配好 / 能否握手 / 官方工具数量」，绝不回传 Token 本身、长度或任何片段
+      case 'mcp.status': {
+        if (!mcpClient.readToken()) {
+          return ok({
+            mock: true,
+            hasToken: false,
+            handshake: 'skipped',
+            toolCount: 0,
+            note: '未配置 MCP_TOKEN，当前为离线演示（Mock）模式'
+          })
+        }
+        const tools = await mcpClient.listTools() // Token 无效时抛 401，由下方 catch 统一透出
+        return ok({
+          mock: false,
+          hasToken: true,
+          handshake: 'ok',
+          toolCount: tools.length,
+          note: 'MCP_TOKEN 已生效，真实接口可用'
+        })
+      }
       // 联调辅助：拉取官方工具清单与 inputSchema（只读，用于校正入参字段，不回传凭证）
       case 'mcp.tools': {
         if (isMockMode()) {

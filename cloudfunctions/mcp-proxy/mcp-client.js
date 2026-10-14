@@ -25,10 +25,15 @@ function readToken() {
   return t && String(t).trim() ? String(t).trim() : ''
 }
 
-// 是否处于 Mock 模式：无 Token 且未显式关闭 Mock
+// 是否处于 Mock 模式（离线演示数据）
+//   有 Token            → 真实模式，返回 false
+//   无 Token 且未显式关 Mock → Mock 模式，返回 true（便于离线演示完整链路）
+//   无 Token 但 ENABLE_MOCK=false → 返回 false，**不静默降级**：
+//     此时工具会抛 NO_TOKEN 错误，避免「以为在跑真实接口、其实在看演示数据」的误判
 function isMockMode() {
-  if (String(process.env.ENABLE_MOCK || 'true') === 'false') return !readToken()
-  return !readToken()
+  if (readToken()) return false
+  const flag = String(process.env.ENABLE_MOCK || 'true').toLowerCase()
+  return flag !== 'false'
 }
 
 // 结构化错误
