@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "推荐结果",
+  "usingComponents": {
+    "meal-card": "/components/meal-card/meal-card"
+  }
+}

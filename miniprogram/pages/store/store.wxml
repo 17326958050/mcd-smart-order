@@ -1,0 +1,19 @@
+<!-- 门店选择页：搜索 + 列表 + 空态 -->
+<view class="page">
+  <view class="search-row">
+    <input class="search-input" placeholder="手动搜索门店名称/地址" value="{{keyword}}"
+           bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearch" />
+    <button class="search-btn" bindtap="onSearch" loading="{{loading}}">搜索</button>
+  </view>
+
+  <view class="hint">默认使用模糊位置推荐，精确门店由你手动选择</view>
+
+  <view wx:for="{{stores}}" wx:key="id" class="store-item" data-store="{{item}}" bindtap="onSelectStore">
+    <view class="store-name">{{item.name}}</view>
+    <view class="store-addr">{{item.address}}</view>
+  </view>
+
+  <view wx:if="{{empty}}" class="empty">附近暂无可用门店，请手动搜索</view>
+
+  <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品</view>
+</view>

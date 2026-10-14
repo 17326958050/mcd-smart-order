@@ -1,6 +1,10 @@
 {
   "pages": [
-    "pages/index/index"
+    "pages/index/index",
+    "pages/store/store",
+    "pages/recommend/recommend",
+    "pages/checkout/checkout",
+    "pages/order-detail/order-detail"
   ],
   "window": {
     "navigationBarTitleText": "麦麦智能点单助手",

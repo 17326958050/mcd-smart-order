@@ -1,0 +1,6 @@
+<!-- 对话输入条：输入框 + 发送按钮 -->
+<view class="chat-bar">
+  <input class="chat-input" value="{{value}}" placeholder="{{placeholder}}"
+         maxlength="{{maxLength}}" bindinput="onInput" confirm-type="send" bindconfirm="onSend" />
+  <button class="chat-send" bindtap="onSend">发送</button>
+</view>

@@ -1,0 +1,5 @@
+.meal-card { background: #fff; border-radius: 12rpx; padding: 24rpx; margin-bottom: 16rpx; }
+.meal-card.unverified { opacity: 0.5; }
+.meal-name { font-size: 30rpx; font-weight: 600; }
+.meal-cal { font-size: 24rpx; color: #999; margin-top: 8rpx; }
+.meal-note { font-size: 22rpx; color: #999; margin-top: 8rpx; }

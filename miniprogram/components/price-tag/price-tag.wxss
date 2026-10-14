@@ -1,0 +1,3 @@
+.price-tag { font-size: 32rpx; font-weight: 700; }
+.price-tag.verified { color: #DA291C; }
+.price-tag.unverified { color: #bbb; }

@@ -1,0 +1,13 @@
+<!-- 推荐页：条件回显 + 餐品卡片列表 + 去结算 -->
+<view class="page">
+  <view class="cond-box" wx:if="{{conditions}}">
+    <text>预算 ≤ ¥{{conditions.budgetYuan}} · 热量 ≤ {{conditions.maxCalorie}} 千卡 · 人数 {{conditions.people}} · 忌口：{{conditions.avoidText}}</text>
+  </view>
+
+  <meal-card wx:for="{{meals}}" wx:key="id" meal="{{item}}" bind:select="onSelectMeal" />
+
+  <view wx:if="{{!meals.length}}" class="empty">骨架阶段：推荐逻辑将在第 3 步接入</view>
+
+  <button class="primary-btn" bindtap="goCheckout">去结算</button>
+  <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品；未实算结果仅为标价参考</view>
+</view>

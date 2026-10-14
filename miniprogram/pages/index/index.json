@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "麦麦智能点单助手"
+  "navigationBarTitleText": "麦麦智能点单助手",
+  "usingComponents": {
+    "chat-bar": "/components/chat-bar/chat-bar"
+  }
 }

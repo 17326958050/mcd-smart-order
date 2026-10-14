@@ -1,0 +1,2 @@
+<!-- 价格标签：¥ + 格式化金额；未实算灰显 -->
+<text class="price-tag {{verified ? 'verified' : 'unverified'}}">¥{{display}}</text>

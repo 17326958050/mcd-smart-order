@@ -1,0 +1,7 @@
+.page { padding: 24rpx; }
+.card { background: #fff; border-radius: 12rpx; padding: 24rpx; margin-bottom: 20rpx; }
+.row { display: flex; justify-content: space-between; align-items: center; padding: 12rpx 0; font-size: 28rpx; }
+.row.saved { color: #DA291C; font-weight: 700; }
+.tip { font-size: 22rpx; color: #999; margin-top: 8rpx; }
+.primary-btn { background: #DA291C; color: #fff; border-radius: 12rpx; margin-top: 24rpx; }
+.disclaimer-footer { text-align: center; color: #ccc; font-size: 20rpx; margin-top: 24rpx; }

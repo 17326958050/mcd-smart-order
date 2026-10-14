@@ -1,0 +1,17 @@
+<!-- 账单页：标价/券后/省钱 + 仅查询模式开关 + 下单 -->
+<view class="page">
+  <view class="card">
+    <view class="row"><text>门店</text><text>{{store.name || '未选择'}}</text></view>
+    <view class="row"><text>标价合计</text><price-tag value="{{listPriceYuan}}" verified="{{false}}" /></view>
+    <view class="row"><text>券后实付</text><price-tag value="{{finalPriceYuan}}" verified="{{true}}" /></view>
+    <view class="row saved"><text>本单省</text><text>¥{{savedYuan}}</text></view>
+  </view>
+
+  <view class="card">
+    <view class="row"><text>仅查询模式</text><switch checked="{{queryOnlyMode}}" bindchange="onToggleQueryOnly" /></view>
+    <view class="tip">开启时只查询、不产生任何真实订单；关闭后可能真实下单</view>
+  </view>
+
+  <button class="primary-btn" bindtap="onSubmit">下单</button>
+  <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品；价格与供应以麦当劳官方渠道实时结果为准</view>
+</view>

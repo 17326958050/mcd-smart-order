@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "账单",
+  "usingComponents": {
+    "price-tag": "/components/price-tag/price-tag"
+  }
+}

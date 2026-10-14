@@ -1,17 +1,31 @@
-<!-- 第 0 步连通性验证页（后续步骤替换为对话点单首页） -->
-<view class="container">
-  <view class="disclaimer">本项目为参赛作品，非麦当劳官方产品</view>
+<!-- 首页：一句话需求 → 解析 → 选门店 → 推荐（骨架 + 自检入口） -->
+<view class="page">
+  <view class="hero">
+    <view class="hero-title">一句话，帮你算明白怎么点最省</view>
+    <view class="hero-sub">说清预算、热量、忌口、人数，我来推荐并实算价格</view>
+  </view>
 
-  <button class="ping-btn" bindtap="onPing" loading="{{checking}}" disabled="{{checking}}">
-    {{checking ? '验证中…' : '开始连通性验证（ping）'}}
-  </button>
+  <view class="cond-box" wx:if="{{parsed}}">
+    <text>已解析：预算 ≤ ¥{{parsed.budgetYuan}} · 热量 ≤ {{parsed.maxCalorie}} 千卡 · 人数 {{parsed.people}} · 忌口：{{parsed.avoidText}}</text>
+  </view>
 
-  <block wx:if="{{checks}}">
-    <view class="check-item {{checks.ok ? 'pass' : 'fail'}}">① ping 返回 ok:true —— {{checks.ok ? '通过' : '未通过'}}</view>
-    <view class="check-item {{checks.env ? 'pass' : 'fail'}}">② env = {{result.env}} —— {{checks.env ? '通过' : '未通过（环境变量未生效需重新部署）'}}</view>
-    <view class="check-item {{checks.openid ? 'pass' : 'fail'}}">③ openid 非空 —— {{checks.openid ? '通过' : '未通过'}}</view>
-    <view class="check-item {{checks.appid ? 'pass' : 'fail'}}">④ appid = {{result.appid}} —— {{checks.appid ? '通过' : '未通过'}}</view>
-  </block>
+  <view class="actions">
+    <button class="ghost-btn" bindtap="goStore">选择门店</button>
+    <button class="ghost-btn" bindtap="goRecommend">查看推荐</button>
+  </view>
 
-  <view wx:if="{{result && result.error}}" class="error">错误：{{result.error}}</view>
+  <view class="selfcheck">
+    <button class="link-btn" bindtap="onPing" loading="{{checking}}">连通性自检（ping）</button>
+    <block wx:if="{{checks}}">
+      <view class="check {{checks.ok ? 'pass' : 'fail'}}">① ok:true {{checks.ok ? '通过' : '未通过'}}</view>
+      <view class="check {{checks.env ? 'pass' : 'fail'}}">② env {{checks.env ? '通过' : '未通过'}}</view>
+      <view class="check {{checks.openid ? 'pass' : 'fail'}}">③ openid 非空 {{checks.openid ? '通过' : '未通过'}}</view>
+      <view class="check {{checks.appid ? 'pass' : 'fail'}}">④ appid 正确 {{checks.appid ? '通过' : '未通过'}}</view>
+    </block>
+    <view wx:if="{{result && result.error}}" class="err">{{result.error}}</view>
+  </view>
+
+  <chat-bar bind:send="onSendNeed" />
+
+  <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品；输出仅供参考，价格与供应以官方渠道实时结果为准</view>
 </view>

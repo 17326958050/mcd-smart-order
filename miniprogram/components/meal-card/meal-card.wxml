@@ -1,0 +1,7 @@
+<!-- 餐品卡片：名称 + 热量 + 价格标签（verified 控制灰显） -->
+<view class="meal-card {{meal.verified ? '' : 'unverified'}}" bindtap="onTap">
+  <view class="meal-name">{{meal.name || '未命名餐品'}}</view>
+  <view class="meal-cal" wx:if="{{meal.calorie != null}}">{{meal.calorie}} 千卡</view>
+  <price-tag value="{{meal.priceYuan}}" verified="{{meal.verified}}" />
+  <view class="meal-note" wx:if="{{!meal.verified}}">未经实算验证，仅为标价参考</view>
+</view>

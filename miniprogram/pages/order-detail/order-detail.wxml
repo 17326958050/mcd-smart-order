@@ -1,0 +1,10 @@
+<!-- 订单详情：骨架，第 3 步接入查询 -->
+<view class="page">
+  <view class="card">
+    <view class="row"><text>订单号</text><text>{{orderId || '--'}}</text></view>
+    <view class="row"><text>状态</text><text>{{order.status || '待查询'}}</text></view>
+    <view class="row"><text>金额</text><price-tag value="{{order.amountYuan}}" verified="{{true}}" /></view>
+  </view>
+  <button class="primary-btn" bindtap="onQuery" loading="{{loading}}">查询订单</button>
+  <view class="disclaimer-footer">本项目为参赛作品，非麦当劳官方产品</view>
+</view>

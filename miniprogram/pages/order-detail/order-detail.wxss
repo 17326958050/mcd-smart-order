@@ -1,0 +1,5 @@
+.page { padding: 24rpx; }
+.card { background: #fff; border-radius: 12rpx; padding: 24rpx; }
+.row { display: flex; justify-content: space-between; align-items: center; padding: 12rpx 0; font-size: 28rpx; }
+.primary-btn { background: #DA291C; color: #fff; border-radius: 12rpx; margin-top: 24rpx; }
+.disclaimer-footer { text-align: center; color: #ccc; font-size: 20rpx; margin-top: 24rpx; }

@@ -1,0 +1,5 @@
+.page { padding: 24rpx; }
+.cond-box { background: #fff; border-radius: 12rpx; padding: 20rpx; font-size: 24rpx; color: #666; margin-bottom: 20rpx; }
+.empty { text-align: center; color: #999; font-size: 26rpx; padding: 80rpx 0; }
+.primary-btn { background: #DA291C; color: #fff; border-radius: 12rpx; margin-top: 24rpx; }
+.disclaimer-footer { text-align: center; color: #ccc; font-size: 20rpx; margin-top: 24rpx; }
