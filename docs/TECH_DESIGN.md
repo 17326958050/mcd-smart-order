@@ -45,13 +45,15 @@
 
 ```
 1. index 页输入一句话 ──→ chat-parse（清洗→结构化：预算/热量/忌口/人数）
-2. store 页 ──→ mcp-proxy/store.query-nearby-stores（模糊位置）──→ 用户手选门店
+2. store 页 ──→ mcp-proxy/store.query-nearby-stores（城市+关键词双输入）
+                 ──→ 用户手选门店（联调实测：官方要求 city 与 keyword 同时传）
 3. recommend ──→ mcp-proxy/menu.query-meals + nutrition.list-nutrition-foods
                  ──→ 按结构化条件筛选 ──→ mcp-proxy/price.calculate-price 实算
                  （每项打 verified 标记；未实算灰显「未经实算验证，仅为标价参考」）
 4. checkout ──→ mcp-proxy/coupon.available-coupons 对比券后价
-                 ──→ 展示「本单省 ¥X」；>¥150 弹窗复述确认
+                 ──→ 展示省钱金句卡（省>0 红卡 / 省=0 如实浅卡）；>¥150 弹窗复述确认
                  ──→ 仅查询模式拦截 / 用户显式开启下单 ──→ mcp-proxy/order.create-order
+                 （下单必带 takeWayCode，取自算价返回的 takeWayList）
 5. order-service 落库 orders（绑定 openid）──→ order-detail 页 query-order 查状态
 ```
 
@@ -107,4 +109,24 @@ project.config.json
 ## 10. 已确认的环境事实（第 0 步结论）
 
 - 云环境 ID：`cloud1-d5gheb18zd0b42967`（原计划 ID 经核实不存在，已报备变更）
-- AppID：`wxb417c25671e997a4`；环境变量：`MY_ENV_ID` 已配、`MCP_TOKEN` 待第 2 步前配置
+- AppID：`wxb417c25671e997a4`；环境变量：`MY_ENV_ID`、`MCP_TOKEN` 均已配置生效
+
+## 11. Token 联调实测结论（第 2~5 步实测修正）
+
+> 以下均为 MCP_TOKEN 生效后用官方 inputSchema 与真实调用逐项验证的结论，
+> 与初版设计的「猜测字段」有出入，以此为准。
+
+1. **入参**：官方工具用 `storeCode`（非 storeId）、`orderType`+`beType` 必传、
+   商品用 `items[].productCode`、`create-order` 到店必传 `takeWayCode`（取自算价返回 takeWayList）
+2. **门店查询**：`city` 与 `keyword` 必须同时传（错误码 600058），故门店页为城市+关键词双输入
+3. **返回格式**：官方返回是「说明文字 + 内嵌 JSON」混合文本，mcp-client 用括号平衡提取；
+   业务数据在 `data.data`；业务错误 `success:false` 转结构化错误上抛（不静默）
+4. **菜单结构**：`query-meals` 返回分类目录（仅 code）+ `data.meals` 编码字典（含名称/价格，单位元）
+5. **营养表**：返回 CSV 文本（约 160 条经典餐品），按名称匹配；匹配率如实透出为
+   `nutritionCoverage`，热量未知的餐品不过滤、不猜
+6. **价格**：`calculate-price` 返回「分」，在 tools/price.js 唯一换算点 ÷100 转元字符串
+7. **券数据**：当前 MCP 账户与各实测门店暂无券（如实展示「无券不虚构」，Mock 保留叠券演示）
+8. **云函数超时**：线上默认 3 秒且 CLI 无法修改，已在云开发控制台手动改为 60 秒
+   （组合推荐需 10~25 秒：5 次实算）
+9. **联调辅助入口**：`mcp.status`（Token 自检白名单字段）/ `mcp.tools`（官方工具清单）/
+   `mcp.raw`（只读查询类工具原始返回，手机号字段脱敏）
