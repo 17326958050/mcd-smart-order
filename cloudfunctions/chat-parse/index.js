@@ -27,6 +27,7 @@ function sanitize(input) {
   s = s.replace(/[`${}\\]/g, '')                              // 常见指令拼接符号
   s = s.replace(/<\s*\/?\s*[a-zA-Z][^>]*>/g, '')              // HTML/XML 标签
   s = s.replace(/(ignore|忽略|无视)\s*(以上|前面|上述)?\s*(所有|一切)?\s*(指令|规则|提示)/gi, '')
+  s = s.replace(/(ignore|disregard|forget)\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|rules?|messages?)/gi, '')
   s = s.replace(/(system|assistant|user)\s*[:：]/gi, '')       // 角色扮演标记
   s = s.replace(/\s+/g, ' ').trim()
   return s.slice(0, MAX_LEN)
