@@ -1,6 +1,7 @@
 .page { padding: 24rpx; }
-.search-row { display: flex; align-items: center; }
+.search-row { display: flex; align-items: center; margin-bottom: 16rpx; }
 .search-input { flex: 1; background: #fff; border-radius: 12rpx; padding: 16rpx 24rpx; font-size: 26rpx; }
+.city-input { background: #fff; }
 .search-btn { margin-left: 16rpx; background: #DA291C; color: #fff; font-size: 26rpx; border-radius: 12rpx; line-height: 68rpx; padding: 0 28rpx; }
 .hint { color: #999; font-size: 22rpx; margin: 20rpx 0; }
 .mock-badge { background: #fff7e6; color: #b26a00; font-size: 22rpx; padding: 12rpx 16rpx; border-radius: 8rpx; margin-bottom: 16rpx; }

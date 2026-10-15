@@ -8,7 +8,7 @@
       <text class="item-qty">×{{item.quantity || 1}}</text>
       <text class="item-price">¥{{item.priceYuan}}</text>
     </view>
-    <view wx:if="{{!items.length}}" class="tip">还没有选餐品，请回到推荐页选择方案</view>
+    <view wx:if="{{items.length === 0}}" class="tip">还没有选餐品，请回到推荐页选择方案</view>
   </view>
 
   <view class="card">

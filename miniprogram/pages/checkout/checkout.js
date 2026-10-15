@@ -22,6 +22,7 @@ Page({
     couponSavedYuan: '0.00',    // 券省
     appliedCouponNames: [],
     coupons: [],
+    takeWayList: [],            // 官方算价返回的取餐方式（下单时选其一回传）
     queryOnlyMode: true,
     confirmed: false,
     verifying: false,
@@ -92,7 +93,9 @@ Page({
       savedYuan: savedAmount(listPrice, finalPrice) || '0.00',
       couponSavedYuan: savedAmount(noCouponPrice, finalPrice) || '0.00',
       appliedCouponNames: appliedNames,
-      mock: !!wc.mock
+      mock: !!wc.mock,
+      // 官方 create-order 到店场景必传 takeWayCode，取自算价返回的 takeWayList
+      takeWayList: wc.takeWayList || []
     })
   },
 
@@ -154,9 +157,12 @@ Page({
 
     this.setData({ submitting: true })
     const items = (this.data.items || []).map((i) => ({ id: i.id, quantity: i.quantity || 1 }))
+    // takeWayCode：官方 create-order 到店必传，取算价返回 takeWayList 的第一项（默认取餐方式）
+    const firstTakeWay = (this.data.takeWayList || [])[0] || {}
+    const takeWayCode = firstTakeWay.code || undefined
     const res = await callFunction('mcp-proxy', {
       action: 'order.create',
-      payload: { storeId, items, couponIds: (this.data.cart && this.data.cart.appliedCouponIds) || [] }
+      payload: { storeId, items, couponIds: (this.data.cart && this.data.cart.appliedCouponIds) || [], takeWayCode }
     })
     this.setData({ submitting: false })
     if (!res.ok) {

@@ -1,41 +1,25 @@
-// 门店选择页：模糊定位 → 附近门店列表 → 用户手动选择
-// 隐私：只申请模糊位置（scope.userFuzzyLocation），不上传精确位置、不落库；
-//       定位失败时自动降级为「按名称搜索」，保证在没有授权的设备上也能走通全流程
+// 门店选择页：城市 + 关键词搜索 → 门店列表 → 用户手动选择
+// 隐私：不申请精确位置、不上传位置、不落库。
+// 官方实测（BIZ_600058）：query-nearby-stores 要求 city 与 keyword 同时传入，
+// 故城市必填；关键词为空时用「麦当劳」兜底（用户可改为具体门店名）。
 const { callFunction, toastError } = require('../../utils/request.js')
 
 const app = getApp()
 
 Page({
   data: {
-    keyword: '',        // 手动搜索关键词
-    stores: [],         // 门店列表（mcp-proxy / store.queryNearby）
+    city: '',          // 城市（官方接口必填）
+    keyword: '',       // 手动搜索关键词（官方接口必填，空时兜底「麦当劳」）
+    stores: [],        // 门店列表（mcp-proxy / store.queryNearby）
     loading: false,
     empty: false,
     emptyReason: '',
-    locTip: '',
+    locTip: '输入城市搜索附近麦当劳门店，精确门店由你手动选择',
     mock: false
   },
 
-  onLoad() {
-    this.loadByLocation()
-  },
-
-  // 尝试模糊定位；失败不是错误，只是降级
-  async loadByLocation() {
-    let loc = null
-    try {
-      const r = await new Promise((resolve, reject) => {
-        wx.getFuzzyLocation({ type: 'wgs84', success: resolve, fail: reject })
-      })
-      if (r && r.latitude != null) {
-        loc = { latitude: r.latitude, longitude: r.longitude }
-        this.setData({ locTip: '已使用模糊位置推荐附近门店（精确门店由你手动选择）' })
-      }
-    } catch (e) {
-      // 未授权 / 接口未开通 / 用户拒绝 —— 一律降级，不阻断
-      this.setData({ locTip: '未获取到位置授权，已改为按名称搜索（不会上传任何位置信息）' })
-    }
-    await this.query(loc)
+  onCityInput(e) {
+    this.setData({ city: e.detail.value })
   },
 
   onSearchInput(e) {
@@ -43,17 +27,18 @@ Page({
   },
 
   async onSearch() {
-    await this.query(null)
+    await this.query()
   },
 
-  // 统一查询入口
-  async query(loc) {
-    this.setData({ loading: true, empty: false, emptyReason: '' })
-    const payload = { keyword: this.data.keyword }
-    if (loc && loc.latitude != null) {
-      payload.latitude = loc.latitude
-      payload.longitude = loc.longitude
+  // 统一查询入口（官方接口要求 city + keyword 双必填）
+  async query() {
+    const city = (this.data.city || '').trim()
+    if (!city) {
+      this.setData({ stores: [], empty: true, emptyReason: '请先输入城市（官方接口要求城市必填）' })
+      return
     }
+    this.setData({ loading: true, empty: false, emptyReason: '' })
+    const payload = { city, keyword: (this.data.keyword || '').trim() || '麦当劳' }
     const res = await callFunction('mcp-proxy', { action: 'store.queryNearby', payload })
     this.setData({ loading: false })
     if (!res.ok) {
@@ -65,7 +50,7 @@ Page({
       stores,
       mock: !!(res.data && res.data.mock),
       empty: stores.length === 0,
-      emptyReason: stores.length === 0 ? '附近暂无可用门店，换个关键词试试' : ''
+      emptyReason: stores.length === 0 ? '该城市暂无可用门店，换个城市或关键词试试' : ''
     })
   },
 

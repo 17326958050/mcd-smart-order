@@ -15,22 +15,34 @@ function fenToYuan(fen) {
 }
 
 module.exports = {
-  // 实算价格：入参 { storeId, items:[{id,quantity}], couponIds }
+  // 实算价格：入参 { storeId, items:[{id,quantity}], couponIds, takeWayCode? }
   // 出参（元字符串，全站唯一口径）：
-  //   { mock, verified, priceYuan, listPriceYuan, savedYuan, appliedCouponIds, items }
+  //   { mock, verified, priceYuan, listPriceYuan, savedYuan, appliedCouponIds, takeWayList, items }
   async calculatePrice({ storeId, items = [], couponIds } = {}) {
     if (isMockMode()) {
       return { mock: true, ...mockCalculate(items, storeId, couponIds) }
     }
 
-    // TODO(联调)：官方 calculate-price 的入参结构（餐品编码字段名 / 数量字段名 / 券字段名）
-    // 未经 MCP_TOKEN 实测确认，暂按最通用命名构造；联调后请用 mcp-proxy 的
-    // action='mcp.toolsSchema' 拉取官方 inputSchema 再校正，不做无根据的猜测扩散。
-    const args = {
-      storeId,
-      meals: items.map((i) => ({ mealId: i.id, quantity: i.quantity || 1 }))
+    // 官方 inputSchema（mcp.tools 实拉）：
+    //   必传 storeCode + orderType + beType；items[].productCode + quantity(≥1)
+    //   券为 item 级字段 couponId / couponCode（非顶层数组）
+    // 到店自提场景（orderType=1, beType=1）beCode 不传。
+    const officialItems = (items || []).map((i) => ({
+      productCode: i.id,
+      quantity: i.quantity || 1
+    }))
+    // TODO(联调)：官方券字段在 items[].couponId（item 级），与本地「整单 couponIds 数组」概念不同。
+    // 此处按最保守映射：仅将第一张券挂到第一件商品上做实算探测；真实返回的
+    // 优惠明细会反映实际应用情况，联调用真实响应校正此映射。
+    if (couponIds && couponIds.length) {
+      officialItems[0] = { ...officialItems[0], couponId: couponIds[0] }
     }
-    if (couponIds && couponIds.length) args.couponIds = couponIds
+    const args = {
+      storeCode: storeId,
+      orderType: 1,
+      beType: 1,
+      items: officialItems
+    }
     const data = await callTool('calculate-price', args)
 
     // 官方返回的金额字段为「分」，在此做唯一一次换算
@@ -49,7 +61,11 @@ module.exports = {
       // 以下三项官方可能不返回，取不到则为 null（前端据此决定是否灰显，不猜）
       listPriceYuan: listFen == null ? null : fenToYuan(listFen),
       savedYuan: discountFen == null ? null : fenToYuan(discountFen),
-      appliedCouponIds: (data && (data.appliedCouponIds || data.couponIds)) || undefined
+      appliedCouponIds: (data && (data.appliedCouponIds || data.couponIds)) || undefined,
+      // takeWayList 原样透传：官方 create-order 到店场景必传 takeWayCode，
+      // 其值必须从本返回的 takeWayList[].code 中选取，前端选择后回传下单
+      // （官方混合结构下业务对象可能在顶层或 data.data 里，两处都找）
+      takeWayList: pickTakeWayList(data)
     }
   },
 
@@ -57,14 +73,28 @@ module.exports = {
   _fenToYuan: fenToYuan
 }
 
-// 从官方返回中取「分」整数字段（字段名可能随接口版本变化，取到即用、取不到返回 null）
+// 从官方返回中取 takeWayList（顶层或 data.data 下均可）
+function pickTakeWayList(data) {
+  if (!data) return undefined
+  if (Array.isArray(data.takeWayList)) return data.takeWayList
+  if (data.data && typeof data.data === 'object' && Array.isArray(data.data.takeWayList)) {
+    return data.data.takeWayList
+  }
+  return undefined
+}
+
+// 从官方返回中取「分」整数字段（官方实测：业务对象在 data.data 里，字段名以真实返回为准，
+// 取到即用、取不到返回 null，绝不猜测）
 function pickFen(data, cands) {
   if (!data) return null
   const keys = cands || ['totalPrice', 'totalFee', 'price', 'amount', 'payableAmount']
+  // 官方混合结构：{ success, code, message, data: {...} } → 先下沉一层（仅当 data.data 为对象）
+  if (data.data && typeof data.data === 'object' && !Array.isArray(data.data)) {
+    return pickFen(data.data, keys)
+  }
   for (const c of keys) {
     if (data[c] != null && Number.isInteger(Number(data[c]))) return Number(data[c])
   }
-  if (data.data) return pickFen(data.data, keys)
   return null
 }
 

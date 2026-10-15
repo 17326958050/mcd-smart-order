@@ -7,7 +7,8 @@ const { callTool, isMockMode } = require('../mcp-client')
 
 module.exports = {
   // 创建订单（真实下单）
-  async createOrder({ storeId, items, queryOnlyMode } = {}) {
+  // takeWayCode：到店必传，由账单页从 calculate-price 返回的 takeWayList 中选取后传入
+  async createOrder({ storeId, items, takeWayCode, queryOnlyMode } = {}) {
     if (queryOnlyMode) {
       // 双重拦截的第一层（前端 checkout 页为第一层）
       return { ok: false, code: 'QUERY_ONLY', error: '仅查询模式下不会真实下单' }
@@ -23,13 +24,18 @@ module.exports = {
         payParams: null // 演示模式不提供支付参数，避免误导
       }
     }
-    // TODO(联调)：官方 create-order 需要「门店信息、就餐方式、商品列表」，
-    // 但入参字段名未公开。此处只传最小必要集合，不猜测额外字段
-    // （尤其不猜支付相关字段，避免误触发真实扣款路径）。
-    // 配好 MCP_TOKEN 后用 action='mcp.tools' 拉取 inputSchema 校正。
+    // 官方 inputSchema（mcp.tools 实拉）：
+    //   必传 storeCode + orderType + beType；items[].productCode + quantity
+    //   takeWayCode 到店场景必传 —— 值来自 calculate-price 返回的 takeWayList[].code
+    //   needTableware 布尔。到店自提（beType=1）beCode 不传。
+    // 不传任何支付相关字段（官方支付参数由返回给出，本项目原样交前端、不实现支付跳转）。
     const data = await callTool('create-order', {
-      storeId,
-      meals: items.map((i) => ({ mealId: i.id, quantity: i.quantity || 1 }))
+      storeCode: storeId,
+      orderType: 1,
+      beType: 1,
+      items: (items || []).map((i) => ({ productCode: i.id, quantity: i.quantity || 1 })),
+      takeWayCode: takeWayCode || undefined,
+      needTableware: true
     })
     return {
       mock: false,

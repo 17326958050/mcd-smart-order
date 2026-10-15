@@ -12,22 +12,38 @@ const nutritionTools = require('./nutrition')
 const couponTools = require('./coupon')
 
 // ============ 菜单查询 ============
+// 官方 inputSchema（mcp.tools 实拉）：query-meals 必传 storeCode + orderType + beType；
+// 无 keyword 字段 → 关键词过滤在本地做（拉全菜单后按名称过滤）。
+// 到店自提场景（orderType=1, beType=1）官方明确 beCode 不要传。
 async function queryMeals({ storeId, keyword } = {}) {
   if (isMockMode()) {
     let list = mockData.meals
     if (keyword) list = list.filter((m) => m.name.indexOf(keyword) >= 0)
     return { mock: true, meals: list.map((m) => ({ ...m })) }
   }
-  const data = await callTool('query-meals', { storeId, ...(keyword ? { keyword } : {}) })
-  return { mock: false, meals: normalizeMeals(data) }
+  const data = await callTool('query-meals', {
+    storeCode: storeId,
+    orderType: 1,
+    beType: 1
+  })
+  let meals = normalizeMeals(data)
+  if (keyword) meals = meals.filter((m) => (m.name || '').indexOf(keyword) >= 0)
+  return { mock: false, meals }
 }
 
+// 官方 inputSchema：query-meal-detail 必传 storeCode + orderType + beType + code
+// （code 即快餐门店内唯一餐品编码）。到店自提场景 beCode 传了会报错，绝不传。
 async function queryMealDetail({ mealId, storeId } = {}) {
   if (isMockMode()) {
     const m = mockData.meals.find((x) => x.id === mealId)
     return { mock: true, meal: m ? { ...m } : null }
   }
-  const data = await callTool('query-meal-detail', { mealId, storeId })
+  const data = await callTool('query-meal-detail', {
+    storeCode: storeId,
+    orderType: 1,
+    beType: 1,
+    code: mealId
+  })
   return { mock: false, meal: normalizeMeal(data && (data.meal || data)) }
 }
 
@@ -39,7 +55,7 @@ async function queryMealDetail({ mealId, storeId } = {}) {
  * @param {number} [p.evaluateLimit] 最多实算多少个组合（控制真实接口调用量，官方限流 600/分钟）
  * @returns 组合列表（按实付升序）+ insight（标价最低 ≠ 实付最低 的实证）
  */
-async function recommendCombos({ storeId, conditions = {}, evaluateLimit = 10 } = {}) {
+async function recommendCombos({ storeId, conditions = {}, evaluateLimit = 5 } = {}) {
   const budget = conditions.budgetYuan == null ? null : Number(conditions.budgetYuan)
   const maxCalorie = conditions.maxCalorie == null ? null : Number(conditions.maxCalorie)
   const avoidKeywords = conditions.avoidKeywords || []
@@ -48,9 +64,15 @@ async function recommendCombos({ storeId, conditions = {}, evaluateLimit = 10 } 
   // --- 1. 拉取数据源 ---
   const mealRes = await queryMeals({ storeId })
   const meals = mealRes.meals || []
+  // 官方营养表实测：无餐品编码，仅 productName —— 与菜单靠「名称」匹配；
+  // Mock 数据额外带 mealId，两个键都收录，两种模式都能命中
   const nutritionRes = await nutritionTools.listNutritionFoods({})
   const kcalMap = {}
-  ;(nutritionRes.foods || []).forEach((f) => { if (f.mealId && f.calorie != null) kcalMap[f.mealId] = f.calorie })
+  ;(nutritionRes.foods || []).forEach((f) => {
+    if (f.calorie == null) return
+    if (f.name) kcalMap[f.name] = f.calorie
+    if (f.mealId) kcalMap[f.mealId] = f.calorie
+  })
 
   const couponRes = await couponTools.queryStoreCoupons({ storeId })
   const coupons = couponRes.coupons || []
@@ -61,15 +83,23 @@ async function recommendCombos({ storeId, conditions = {}, evaluateLimit = 10 } 
   // --- 2. 忌口过滤（不可信输入 → 只用于名称匹配，不做任何解释执行）---
   const excludedByAvoid = []
   const pool = []
+  let withCalorie = 0
   meals.forEach((m) => {
-    const kcal = kcalMap[m.id] != null ? kcalMap[m.id] : (m.calorie != null ? m.calorie : null)
+    // 热量优先级：营养表（按名称精确命中）> 菜单自带 > 无（null）
+    // 官方营养表仅 160 条经典餐品，与本店菜单名称精确匹配率有限：
+    // 命不中的餐品热量为 null，热量条件对其静默失效 —— 以 nutritionCoverage 如实透出，
+    // 绝不用模糊匹配猜（「麦香鸡」≠「麦香鱼」）
+    const kcal = kcalMap[m.name] != null ? kcalMap[m.name]
+      : (kcalMap[m.id] != null ? kcalMap[m.id] : (m.calorie != null ? m.calorie : null))
     const hit = avoidKeywords.find((k) => m.name && m.name.indexOf(k) >= 0)
     if (hit) {
       excludedByAvoid.push({ id: m.id, name: m.name, keyword: hit })
       return
     }
+    if (kcal != null) withCalorie++
     pool.push({ ...m, calorie: kcal })
   })
+  const nutritionCoverage = pool.length ? Math.round((withCalorie / pool.length) * 100) : 0
 
   // --- 3. 主食 / 配餐 分类（优先用官方分类字段，退化到名称启发式）---
   const isMain = (m) => (m.category ? /主|汉堡|堡|卷|饭|套餐/.test(String(m.category)) : /堡|卷|饭|派/.test(m.name || ''))
@@ -97,9 +127,11 @@ async function recommendCombos({ storeId, conditions = {}, evaluateLimit = 10 } 
   candidates.forEach((c) => {
     const stat = comboStat(c, coupons, mealMap)
     if (budget != null && stat.listYuan > budget) { dropByBudget++; return }
-    if (maxCalorie != null && stat.calorie > maxCalorie) { dropByCalorie++; return }
+    // 热量过滤：仅对「热量完全已知」的组合生效（部分未知不猜、不过滤）
+    if (maxCalorie != null && stat.calorie != null && stat.calorie > maxCalorie) { dropByCalorie++; return }
     c._lb = stat.lowerBound // 券后下界（考虑券门槛与适用范围，是实付的合法下界）
     c._list = stat.listYuan
+    c._kcal = stat.calorie
     feasible.push(c)
   })
 
@@ -115,23 +147,29 @@ async function recommendCombos({ storeId, conditions = {}, evaluateLimit = 10 } 
       couponIds
     })
     if (!calc || calc.verified !== true) continue // 未通过实算的一律不进推荐列表
+    // 组装展示明细：真实模式的算价返回不含逐项明细（名称/热量），
+    // 统一从菜单池 mealMap 补齐；Mock 的 calc.items 自带明细则优先
+    const sourceItems = (calc.items && calc.items.length) ? calc.items : c.items
     combos.push({
       id: c.sig,
-      items: (calc.items || c.items).map((i) => ({
-        id: i.id,
-        name: i.name,
-        priceYuan: i.priceYuan, // 元，原样
-        quantity: i.quantity || 1,
-        calorie: i.calorie != null ? i.calorie : null,
-        verified: true,         // 价格经过实算
-        mock: !!calc.mock
-      })),
-      listPriceYuan: calc.listPriceYuan,   // 标价合计（元）
+      items: sourceItems.map((i) => {
+        const m = mealMap[i.id] || {}
+        return {
+          id: i.id,
+          name: i.name || m.name || ('餐品 ' + i.id),
+          priceYuan: i.priceYuan != null ? i.priceYuan : m.priceYuan, // 元，原样
+          quantity: i.quantity || 1,
+          calorie: i.calorie != null ? i.calorie : (m.calorie != null ? m.calorie : null),
+          verified: true,         // 价格经过实算
+          mock: !!calc.mock
+        }
+      }),
+      listPriceYuan: calc.listPriceYuan != null ? calc.listPriceYuan : (c._list != null ? c._list.toFixed(2) : null),
       finalPriceYuan: calc.priceYuan,      // 券后实付（元）
-      savedYuan: Number(calc.savedYuan || 0) > 0 ? calc.savedYuan : '0.00',
+      savedYuan: calc.savedYuan != null && Number(calc.savedYuan) > 0 ? calc.savedYuan : '0.00',
       appliedCouponIds: calc.appliedCouponIds || [],
       couponNames: (calc.appliedCouponIds || []).map((id) => couponName[id]).filter(Boolean),
-      totalCalorie: calc.totalCalorie == null ? c._calorie : calc.totalCalorie,
+      totalCalorie: calc.totalCalorie != null ? calc.totalCalorie : (c._kcal != null ? c._kcal : null),
       verified: true,
       mock: !!calc.mock
     })
@@ -170,6 +208,8 @@ async function recommendCombos({ storeId, conditions = {}, evaluateLimit = 10 } 
     mock: mealRes.mock || nutritionRes.mock || couponRes.mock,
     storeId,
     applied: { budgetYuan: conditions.budgetYuan || null, maxCalorie, avoidKeywords, people, groupSize },
+    // 热量数据覆盖率（%）：官方营养表按名称匹配的命中率，低于 100 时热量筛选仅对命中的餐品生效
+    nutritionCoverage,
     combos: top.map((c, i) => ({ ...c, rank: i + 1, isCheapest: i === 0, isLowestList: listTop ? c.id === listTop.id : false })),
     insight,
     meals: mealsPreview,
@@ -239,18 +279,22 @@ function combinations(arr, k) {
 }
 
 // 组合的标价/热量/券后下界（用于实算前的粗筛，不对外输出）
+// 热量口径：任一项无热量数据 → 组合热量为 null（不展示误导性的部分和），
+// 热量上限过滤对 null 组合跳过（不猜、不默认 0）
 function comboStat(combo, coupons, mealMap) {
   const count = {}
   let listYuan = 0
   let calorie = 0
+  let calorieKnown = true
   combo.items.forEach((it) => {
     const m = (mealMap && mealMap[it.id]) || {}
     const p = Number(m.priceYuan)
-    const c = m.calorie != null ? Number(m.calorie) : 0
+    const c = m.calorie != null ? Number(m.calorie) : null
     const qty = it.quantity || 1
     count[it.id] = (count[it.id] || 0) + qty
     if (!Number.isNaN(p)) listYuan += p * qty
-    if (!Number.isNaN(c)) calorie += c * qty
+    if (c == null) calorieKnown = false
+    else if (!Number.isNaN(c)) calorie += c * qty
   })
   // 券后下界：取「门槛达标且适用范围满足」的券中面额最大的一张
   // （叠加券理论上能让实付更低，所以用最大单张面额作为下界估计是安全的）
@@ -265,7 +309,11 @@ function comboStat(combo, coupons, mealMap) {
     const d = Number(cp.discountYuan)
     if (!Number.isNaN(d) && d > maxDiscount) maxDiscount = d
   })
-  return { listYuan, calorie, lowerBound: Math.max(listYuan - maxDiscount, 0) }
+  return {
+    listYuan,
+    calorie: calorieKnown ? calorie : null,
+    lowerBound: Math.max(listYuan - maxDiscount, 0)
+  }
 }
 
 function clamp(n, min, max) {
@@ -277,7 +325,9 @@ function clamp(n, min, max) {
 function normalizeMeal(m) {
   if (!m) return null
   return {
-    id: m.mealId || m.id || m.productCode,
+    // id 优先取 productCode：官方 calculate-price / create-order 的 items[].productCode
+    // 需要餐品编码，本项目前端流转统一用 meal.id，因此 id 必须 = productCode
+    id: m.productCode || m.mealId || m.id,
     name: m.mealName || m.name || m.productName,
     priceYuan: m.price != null ? String(m.price) : (m.priceYuan != null ? String(m.priceYuan) : undefined),
     calorie: m.calorie != null ? m.calorie : (m.energy != null ? m.energy : undefined),
@@ -286,9 +336,32 @@ function normalizeMeal(m) {
 }
 
 function normalizeMeals(data) {
-  const raw = (data && (data.meals || data.list || data.data)) || []
-  if (!Array.isArray(raw)) return []
-  return raw.map(normalizeMeal).filter(Boolean)
+  // 官方实测返回：{ success, code, message, data: { categories, meals } }
+  //   categories: [{ name, meals: [{ code, tags }] }]（12 分类 / 107 编码）
+  //   meals: { code: { name, image, currentPrice, originalPrice, canWithOrder } }（价格为「元」字符串）
+  const d = data && data.data
+  if (!d) return []
+  const mealDict = d.meals || {}
+  const categories = d.categories || []
+  const out = []
+  const seen = {}
+  categories.forEach((cat) => {
+    (cat.meals || []).forEach((m) => {
+      const code = m.code
+      if (!code || seen[code]) return
+      const info = mealDict[code] || {}
+      seen[code] = true
+      out.push({
+        id: code, // 餐品编码（productCode 口径，供算价/下单原样回传官方）
+        name: info.name || ('餐品 ' + code),
+        priceYuan: info.currentPrice != null ? String(info.currentPrice) : undefined, // 元，原样
+        calorie: null, // 菜单接口不含热量 → 由营养表模块按名称匹配补充
+        category: cat.name,
+        tags: m.tags || []
+      })
+    })
+  })
+  return out
 }
 
 module.exports = { queryMeals, queryMealDetail, recommendCombos }

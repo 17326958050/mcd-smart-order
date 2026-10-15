@@ -6,9 +6,10 @@ const mockData = require('../mock/data')
 
 module.exports = {
   // 门店可用券
+  // 官方 inputSchema（mcp.tools 实拉）：必传 orderType + beType + storeCode（到店自提 beCode 不传）
   async queryStoreCoupons({ storeId } = {}) {
     if (isMockMode()) return { mock: true, coupons: mockData.coupons.map((c) => ({ ...c })) }
-    const data = await callTool('query-store-coupons', { storeId })
+    const data = await callTool('query-store-coupons', { orderType: 1, beType: 1, storeCode: storeId })
     return { mock: false, coupons: normalizeCoupons(data) }
   },
 
@@ -39,8 +40,9 @@ module.exports = {
 }
 
 // 归一化：金额字段一律为「元」字符串，不做换算
+// 官方实测返回：{ success, code, message, data: [...] }，券数组在 data.data
 function normalizeCoupons(data) {
-  const raw = (data && (data.coupons || data.list || data.data)) || []
+  const raw = (data && (Array.isArray(data.data) ? data.data : (data.coupons || data.list))) || []
   if (!Array.isArray(raw)) return []
   return raw.map((c) => ({
     id: c.couponId || c.id || c.code,

@@ -106,6 +106,23 @@ exports.main = async (event = {}, context) => {
         const tools = await mcpClient.listTools()
         return ok({ mock: false, tools })
       }
+      // 联调辅助：透传官方查询类工具的原始返回（只读）
+      // 用途：解析层字段名校正（normalize* / pickFen 系列均以真实返回为准，不做猜测）
+      // 安全：① 仅白名单查询类工具，交易类一律拒绝 ② 返回体过脱敏器（剥离手机号等个人信息）
+      //       ③ 与 mcp.tools 一样不回传任何凭证
+      case 'mcp.raw': {
+        const RAW_WHITELIST = ['query-nearby-stores', 'query-meals', 'query-meal-detail',
+          'calculate-price', 'query-store-coupons', 'list-nutrition-foods', 'query-order', 'order-list']
+        const toolName = String(payload.tool || '')
+        if (!RAW_WHITELIST.includes(toolName)) {
+          return { ok: false, code: 'RAW_FORBIDDEN', error: 'mcp.raw 仅允许查询类工具：' + RAW_WHITELIST.join(' / ') }
+        }
+        if (isMockMode()) {
+          return ok({ mock: true, note: '未配置 MCP_TOKEN，mcp.raw 不可用' })
+        }
+        const data = await mcpClient.callTool(toolName, payload.args || {})
+        return ok({ mock: false, tool: toolName, data: sanitizeRaw(data) })
+      }
       default:
         return { ok: false, error: 'unknown action', action }
     }
@@ -120,6 +137,21 @@ exports.main = async (event = {}, context) => {
 // 包装成功返回
 function ok(data) {
   return { ok: true, ...(data || {}) }
+}
+
+// mcp.raw 返回体脱敏：递归剥离疑似个人信息字段（手机号等），其余原样
+const SENSITIVE_KEY_RE = /^(phone|mobile|phoneNumber|tel|telephone|contactPhone)$/i
+function sanitizeRaw(value) {
+  if (Array.isArray(value)) return value.map(sanitizeRaw)
+  if (value && typeof value === 'object') {
+    const out = {}
+    Object.keys(value).forEach((k) => {
+      if (SENSITIVE_KEY_RE.test(k)) { out[k] = '[已脱敏]'; return }
+      out[k] = sanitizeRaw(value[k])
+    })
+    return out
+  }
+  return value
 }
 
 // 「是否只允许查询」的唯一判定处（双重防护的第二层）

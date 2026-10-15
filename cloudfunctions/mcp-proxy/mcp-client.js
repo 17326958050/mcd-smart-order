@@ -165,16 +165,61 @@ async function callTool(name, args = {}) {
 }
 
 // 解包工具返回：优先解析 content[].text 中的 JSON
+// 官方实测（mcp.raw 联调）：text 常为「字段说明文字 + 内嵌业务 JSON + 补充说明」的混合体，
+// 整段 JSON.parse 会失败 → 必须从中提取平衡的 JSON 子串。
+// 业务 JSON 形如 {"success":true/false,"code":200/600058,"message":"...","data":...}，
+// success=false 属于业务层错误（HTTP/JSON-RPC 层面仍是成功的）→ 转结构化异常上抛。
 function unwrapToolResult(result) {
   const content = (result && result.content) || []
   const texts = content.filter((c) => c && c.type === 'text').map((c) => c.text)
   if (!texts.length) return result || {}
   const joined = texts.join('\n')
-  try {
-    return JSON.parse(joined)
-  } catch (e) {
-    return { text: joined } // 非 JSON 时原样返回文本，不做猜测
+  // ① 整段就是纯 JSON：直接解析
+  try { return checkBizError(JSON.parse(joined)) } catch (e) { /* 继续提取 */ }
+  // ② 混合文本：提取内嵌 JSON
+  const obj = extractEmbeddedJson(joined)
+  if (obj) return checkBizError(obj)
+  return { text: joined } // 真解析不出 JSON 时原样返回文本，不做猜测
+}
+
+// 业务层错误检查：success=false → 抛结构化异常（带官方 code/message）
+function checkBizError(obj) {
+  if (obj && typeof obj === 'object' && obj.success === false) {
+    throw mcpError('BIZ_' + (obj.code != null ? obj.code : 'ERR'), obj.message || '官方接口业务错误')
   }
+  return obj
+}
+
+// 从混合文本提取「括号平衡且含 success 字段」的 JSON 子串
+// （说明文字里可能出现孤立花括号，故必须做深度平衡扫描 + 候选 parse 验证）
+function extractEmbeddedJson(text) {
+  const str = String(text || '')
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] !== '{') continue
+    let depth = 0
+    let inStr = false
+    let esc = false
+    for (let j = i; j < str.length; j++) {
+      const ch = str[j]
+      if (esc) { esc = false; continue }
+      if (inStr && ch === '\\') { esc = true; continue }
+      if (ch === '"') { inStr = !inStr; continue }
+      if (inStr) continue
+      if (ch === '{') depth++
+      else if (ch === '}') {
+        depth--
+        if (depth === 0) {
+          const candidate = str.slice(i, j + 1)
+          try {
+            const parsed = JSON.parse(candidate)
+            if (parsed && typeof parsed === 'object' && parsed.success !== undefined) return parsed
+          } catch (e) { /* 该平衡段非目标 JSON，继续找下一个 '{' */ }
+          break
+        }
+      }
+    }
+  }
+  return null
 }
 
 // 拉取官方工具清单（含 inputSchema）
