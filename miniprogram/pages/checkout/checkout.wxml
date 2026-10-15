@@ -16,9 +16,17 @@
     <view class="row"><text>不用券实付</text><price-tag value="{{noCouponPriceYuan}}" verified="{{true}}" /></view>
     <view class="row"><text>券后实付</text><price-tag value="{{finalPriceYuan}}" verified="{{true}}" /></view>
     <view class="divider"></view>
-    <view class="row saved"><text>本单省</text><text>¥{{savedYuan}}</text></view>
-    <view class="row sub"><text>其中券省</text><text>¥{{couponSavedYuan}}</text></view>
+    <!-- 省钱金句卡：省>0 突出展示；省=0 如实说明（不虚构优惠） -->
+    <view wx:if="{{hasSaved}}" class="saved-card">
+      <view class="saved-main">本单省 <text class="saved-amount">¥{{savedYuan}}</text></view>
+      <view class="saved-sub">标价 ¥{{listPriceYuan}} → 实付 ¥{{finalPriceYuan}}{{couponSavedText}}</view>
+    </view>
+    <view wx:if="{{!hasSaved && !verifying}}" class="saved-card flat">
+      <view class="saved-main">实付 ¥{{finalPriceYuan}}<text class="verified-mark">已实算</text></view>
+      <view class="saved-sub">当前没有可叠加的券，如实展示官方实付价，不虚构优惠</view>
+    </view>
     <view class="coupon-line" wx:if="{{appliedCouponNames.length}}">已用券：{{appliedCouponNames[0]}}</view>
+    <button class="share-btn" open-type="share">分享省钱成果</button>
     <view class="tip">以上金额均来自 calculate-price 实算（全站统一「元」）</view>
     <view class="tip mock-tip" wx:if="{{mock}}">当前为离线演示数据（Mock），不会产生真实订单</view>
     <view class="tip err-tip" wx:if="{{submitNote}}">{{submitNote}}</view>

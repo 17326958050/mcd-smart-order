@@ -102,10 +102,13 @@ Page({
     this.setData({ orderId }, () => this.onQuery())
   },
 
+  // 分享：本地记录有省钱金额时透出（官方实算落库值），保留非官方声明
   onShareAppMessage() {
-    return {
-      title: '麦麦智能点单助手（非麦当劳官方产品）',
-      path: '/pages/index/index'
+    const local = this.data.local
+    let title = '麦麦智能点单助手：一句话点单，官方实算不踩坑'
+    if (local && Number(local.savedYuan) > 0) {
+      title = `这单麦麦帮我省了¥${local.savedYuan}，实付¥${local.finalPriceYuan}`
     }
+    return { title: title + '（非官方作品）', path: '/pages/index/index' }
   }
 })

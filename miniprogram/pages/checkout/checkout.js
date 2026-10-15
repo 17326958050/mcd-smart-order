@@ -20,6 +20,8 @@ Page({
     finalPriceYuan: '0.00',     // 券后实付（实算）
     savedYuan: '0.00',          // 本单省
     couponSavedYuan: '0.00',    // 券省
+    hasSaved: false,            // 省钱金句卡形态：省>0 红卡，否则浅色如实卡
+    couponSavedText: '',        // 「，其中券省 ¥X」副文案
     appliedCouponNames: [],
     coupons: [],
     takeWayList: [],            // 官方算价返回的取餐方式（下单时选其一回传）
@@ -85,13 +87,20 @@ Page({
     const appliedIds = wc.appliedCouponIds || []
     const appliedNames = appliedIds.map((id, idx) => nameList[idx] || id)
 
+    const savedStr = savedAmount(listPrice, finalPrice) || '0.00'
+    const couponSavedStr = savedAmount(noCouponPrice, finalPrice) || '0.00'
+    const hasSaved = Number(savedStr) > 0
+    const couponSavedText = Number(couponSavedStr) > 0 ? '，其中券省 ¥' + couponSavedStr : ''
+
     this.setData({
       items: wc.items || this.data.items,
       listPriceYuan: formatYuan(listPrice),
       noCouponPriceYuan: formatYuan(noCouponPrice),
       finalPriceYuan: formatYuan(finalPrice),
-      savedYuan: savedAmount(listPrice, finalPrice) || '0.00',
-      couponSavedYuan: savedAmount(noCouponPrice, finalPrice) || '0.00',
+      savedYuan: savedStr,
+      couponSavedYuan: couponSavedStr,
+      hasSaved,
+      couponSavedText,
       appliedCouponNames: appliedNames,
       mock: !!wc.mock,
       // 官方 create-order 到店场景必传 takeWayCode，取自算价返回的 takeWayList
@@ -205,7 +214,19 @@ Page({
     wx.navigateTo({ url: '/pages/order-detail/order-detail?orderId=' + encodeURIComponent(orderId) })
   },
 
+  // 分享：标题带实付与省钱金额（金额均来自官方实算，杜绝虚构）；始终保留非官方声明
   onShareAppMessage() {
-    return { title: '麦麦智能点单助手（非麦当劳官方产品）', path: '/pages/index/index' }
+    const storeName = this.data.store ? (this.data.store.name || '') : ''
+    const final = this.data.finalPriceYuan
+    const saved = this.data.savedYuan
+    let title
+    if (this.data.hasSaved && Number(final) > 0) {
+      title = `麦麦点单：${storeName}实付¥${final}，省了¥${saved}`
+    } else if (Number(final) > 0) {
+      title = `麦麦点单：${storeName}官方实算实付¥${final}`
+    } else {
+      title = '麦麦智能点单助手：一句话点单，官方实算不踩坑'
+    }
+    return { title: title + '（非官方作品）', path: '/pages/index/index' }
   }
 })

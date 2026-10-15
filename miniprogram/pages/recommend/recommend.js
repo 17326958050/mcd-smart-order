@@ -65,7 +65,13 @@ Page({
     wx.navigateTo({ url: '/pages/store/store' })
   },
 
+  // 分享：有推荐结果时带最优组合实付（官方实算值），否则用核心卖点文案
   onShareAppMessage() {
-    return { title: '麦麦智能点单助手：标价最低 ≠ 最便宜，我帮你实算（非官方产品）', path: '/pages/index/index' }
+    const best = (this.data.combos || [])[0]
+    let title = '麦麦智能点单：标价最低 ≠ 最便宜，我按实付帮你选'
+    if (best && best.finalPriceYuan && Number(best.finalPriceYuan) > 0) {
+      title = `麦麦智能点单帮你选好了：实付¥${best.finalPriceYuan}（官方实算）`
+    }
+    return { title: title + '（非官方作品）', path: '/pages/index/index' }
   }
 })

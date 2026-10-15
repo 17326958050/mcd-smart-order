@@ -15,4 +15,6 @@
 .oi-meta { font-size: 22rpx; color: #999; margin-top: 6rpx; }
 .tip { font-size: 22rpx; color: #999; margin-top: 8rpx; }
 .placeholder { color: #bbb; font-size: 28rpx; }
+.share-btn { background: #fff; color: #DA291C; border: 2rpx solid #DA291C;
+  border-radius: 32rpx; font-size: 26rpx; margin: 8rpx 0; line-height: 2.2; }
 .disclaimer-footer { text-align: center; color: #ccc; font-size: 20rpx; margin-top: 24rpx; }

@@ -26,6 +26,8 @@
 
   <view class="tip" wx:if="{{note}}">{{note}}</view>
 
+  <button class="share-btn" open-type="share">分享省钱成果</button>
+
   <view class="search-row">
     <input class="search-input" placeholder="输入订单号查询" value="{{orderId}}" bindinput="onInputId" />
     <button class="search-btn" bindtap="onQuery" loading="{{loading}}">查询</button>
